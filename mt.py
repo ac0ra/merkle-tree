@@ -2,7 +2,6 @@
 
 import os
 import hashlib
-import zlib
 from hashxtra import crc32
 
 hashlib.crc32 = crc32
@@ -10,7 +9,7 @@ hashlib.crc32 = crc32
 hlibsupported = hashlib.algorithms
 hashlist = hlibsupported + ('crc32', 'tiger')
 
-htype = 'sha1'
+htype = 'md5'
 csize = 8092
 
 class MarkleTree:
