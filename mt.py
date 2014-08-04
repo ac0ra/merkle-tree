@@ -66,24 +66,6 @@ class MarkleTree:
         self.PrintMT(self._tophash)
         self.Line()
 
-    def md5sum(self, data):
-        m = hashlib.md5()
-        fn = os.path.join(self._root, data)
-        if os.path.isfile(fn):
-            try:   
-                f = file(fn, 'rb')
-            except:
-                return 'ERROR: unable to open %s' % fn
-            while True:
-                d = f.read(8096)
-                if not d:
-                    break
-                m.update(d)
-            f.close()
-        else:
-            m.update(data)
-        return m.hexdigest()
-
     def hashsum(self, data):
         global htype
         global csize
