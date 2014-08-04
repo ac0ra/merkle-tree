@@ -2,6 +2,16 @@
 
 import os
 import hashlib
+import zlib
+from hashxtra import crc32
+
+hashlib.crc32 = crc32
+
+hlibsupported = hashlib.algorithms
+hashlist = hlibsupported + ('crc32', 'tiger')
+
+htype = 'sha1'
+csize = 8092
 
 class MarkleTree:
     def __init__(self, root):
@@ -75,6 +85,33 @@ class MarkleTree:
             m.update(data)
         return m.hexdigest()
 
+    def hashsum(self, data):
+        global htype
+        global csize
+        try: 
+            hcheck = hashlist.index(htype)
+        except ValueError:
+            return 0
+        hashclass = getattr(hashlib, htype)
+        m = hashclass()
+        fn = os.path.join(self._root, data)
+        if os.path.isfile(fn):
+            try:
+                f = file(fn, 'rb')
+            except:
+                return 'ERROR: unable to open %s' % fn
+            while True:
+                d = f.read(csize)
+                if not d:
+                    break
+                m.update(d)
+            f.close()
+        else:
+            m.update(data)
+        return m.hexdigest()
+
+
+
     def GetItems(self, directory):
         value = []
         if directory != self._root:
@@ -96,7 +133,7 @@ class MarkleTree:
         s = ''
         for subitem in items:
             s = s + self._hashlist[subitem]
-        self._hashlist[rootdir] = self.md5sum(s)
+        self._hashlist[rootdir] = self.hashsum(s)
 
     def HashListChild(self, rootdir):
         items = self.GetItems(rootdir)
@@ -112,14 +149,14 @@ class MarkleTree:
                 for subitem in subitems:
                     s = s + self._hashlist[os.path.join(item, subitem)]
                 if rootdir == self._root:
-                    self._hashlist[item] = self.md5sum(s)
+                    self._hashlist[item] = self.hashsum(s)
                 else:
-                    self._hashlist[itemname] = self.md5sum(s)
+                    self._hashlist[itemname] = self.hashsum(s)
             else:
                 if rootdir == self._root:
-                    self._hashlist[item] = self.md5sum(item)
+                    self._hashlist[item] = self.hashsum(item)
                 else:
-                    self._hashlist[itemname] = self.md5sum(itemname)
+                    self._hashlist[itemname] = self.hashsum(itemname)
  
 def MTDiff(mt_a, a_tophash, mt_b, b_tophash):
     if a_tophash == b_tophash:
