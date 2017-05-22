@@ -2,15 +2,40 @@
 
 import os
 import hashlib
-from hashxtra import crc32
+import sys
+import zlib
+
+hlibsupported = list(hashlib.algorithms_available)
+hashlist = hlibsupported + ['crc32', 'tiger']
+
+htype = 'sha256'
+#csize = 8092
+
+
+class crc32(object):
+    name = 'crc32'
+    digest_size = 4
+    block_size = 1
+
+    def __init__(self, arg=''):
+        self.__digest = 0
+        self.update(arg)
+
+    def copy(self):
+        copy = super(self.__class__, self).__new__(__class__)
+        copy.__digest = self.__digest
+        return copy
+
+    def digest(self):
+        return self.__digest
+
+    def hexdigest(self):
+        return '{:08x}'.format(self.__digest)
+
+    def update(self, arg):
+        self.__digest = zlib.crc32(arg, self.__digest) & 0xffffffff
 
 hashlib.crc32 = crc32
-
-hlibsupported = hashlib.algorithms
-hashlist = hlibsupported + ('crc32', 'tiger')
-
-htype = 'md5'
-csize = 8092
 
 class MarkleTree:
     def __init__(self, root):
@@ -82,7 +107,8 @@ class MarkleTree:
             except:
                 return 'ERROR: unable to open %s' % fn
             while True:
-                d = f.read(csize)
+                fsize = os.path.getsize(fn)
+                d = f.read(fsize)
                 if not d:
                     break
                 m.update(d)
@@ -160,8 +186,10 @@ def MTDiff(mt_a, a_tophash, mt_b, b_tophash):
                     MTDiff(mt_a, itemhash, mt_b, diffhash[0])
                 
 if __name__ == "__main__":
-    mt_a = MarkleTree('testA')
-    print mt_a._mt
-    mt_b = MarkleTree('testB')
+    target1 = sys.argv[1]
+    target2 = sys.argv[2]
+    mt_a = MarkleTree(target1)
+    #print mt_a._mt
+    mt_b = MarkleTree(target2)
     MTDiff(mt_a, mt_a._tophash, mt_b, mt_b._tophash)
 
